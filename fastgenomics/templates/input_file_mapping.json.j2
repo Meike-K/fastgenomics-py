@@ -1,0 +1,4 @@
+{ {% for file_key, path_val in file_mapping.items() %}
+    "{{ file_key }}": "{{ path_val }}"{{ "," if not loop.last }}
+{% endfor -%}
+}

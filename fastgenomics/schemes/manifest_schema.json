@@ -1,0 +1,138 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+
+  "definitions": {
+    "input_entry": {
+      "type": "object",
+      "properties": {
+        "Type": {
+          "description": "FASTGenomics Type of the file",
+          "examples": ["expressionMatrix", "geneMatrix", "batchInformation"],
+          "type": "string"
+        },
+        "Usage": {
+          "description": "short description of the file usage",
+          "examples": ["gene expression matrix", "classification of cells"],
+          "type": "string"
+        }
+      },
+      "required": ["Type", "Usage"]
+    },
+    "output_entry": {
+      "allOf": [
+        { "$ref": "#/definitions/input_entry"},
+        { "properties": {
+            "FileName": {
+              "description": "plain filename of the output-file without directory",
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9_.]+$"
+            }
+          },
+          "required": ["FileName"]
+        }
+      ]
+    },
+    "parameter_entry": {
+      "type": "object",
+      "properties": {
+        "Type": {
+          "description": "Type of the value of the parameter",
+          "enum": ["string", "integer", "float"]
+        },
+        "Description": {
+          "description": "Description of the parameter",
+          "type": "string"
+        },
+        "Default": {
+          "description": "Default value of the parameter"
+        }
+      },
+      "required": ["Type", "Description", "Default"]
+    }
+  },
+
+  "type": "object",
+  "properties": {
+    "FASTGenomicsApplication": {
+      "type": "object",
+      "properties": {
+        "Author": {
+          "type": "object",
+          "properties": {
+            "Email": {
+              "description": "E-mail address of app developer",
+              "examples": ["john.doe@fastgenomics.org"],
+              "type": "string"
+            },
+            "Name": {
+              "description": "Name of the app developer",
+              "examples": ["Jon Doe"],
+              "type": "string"
+            },
+            "Organisation": {
+              "description": "Organization of the developer",
+              "examples": ["FASTGenomics"],
+              "type": "string"
+            }
+          }
+        },
+        "Name": {
+          "description": "The name of the application",
+          "examples": ["Hello Genomics Sample App"],
+          "type": "string"
+        },
+        "Type": {
+          "description": "Type of the application",
+          "enum": ["Calculation", "Visualization"]
+        },
+        "Class": {
+          "description": "short class of the app",
+          "examples": ["Data Quality", "Normalization", "Classification"],
+          "type": "string"
+        },
+        "Description": {
+          "description": "Description of the application - can be markdown",
+          "type": "string"
+        },
+        "License": {
+          "description": "License of the application",
+          "examples": ["MIT", "BSD"],
+          "type": "string"
+        },
+        "Demands": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "description": "Demands on the runtime environment",
+            "enum": ["CPU", "GPU", "internet_access", "expose_port"]
+          }
+        },
+        "Input": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_.]+$": {
+              "$ref": "#/definitions/input_entry"
+            }
+          }
+        },
+        "Output": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_.]+$": {
+              "$ref": "#/definitions/output_entry"
+            }
+          }
+        },
+        "Parameters": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9_.]+$": {
+              "$ref": "#/definitions/parameter_entry"
+            }
+          }
+        }
+      },
+      "required": ["Author", "Name", "Type",  "Class", "Description", "License", "Demands", "Input", "Output", "Parameters"]
+    }
+  }
+}

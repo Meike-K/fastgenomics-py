@@ -1,0 +1,13 @@
+version: '3'
+# this file can be used to showcase the environment an app would see.
+# This file is for local development purposes only. FASTGenomics does not need to see this file.
+services:
+  {{ app_name }}:
+    build:
+      context: .
+    image: {% if docker_registry %}{{ docker_registry.rstrip('/') + '/' }}{% endif %}{{ app_name }}:dev
+    volumes:
+      - ./{{ sample_dir }}/config:/fastgenomics/config/:ro
+      - ./{{ sample_dir }}/data:/fastgenomics/data/:ro
+      - ./{{ sample_dir }}/output:/fastgenomics/output/
+      - ./{{ sample_dir }}/summary:/fastgenomics/summary/
