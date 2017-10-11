@@ -12,4 +12,7 @@ services:
 {%- if app_type == 'Calculation' %}
       - ./{{ sample_dir }}/output:/fastgenomics/output/
       - ./{{ sample_dir }}/summary:/fastgenomics/summary/
+{% elif app_type == 'Visualization' %}
+    ports:
+      - "8000:8000"
 {% endif %}
