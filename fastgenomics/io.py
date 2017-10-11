@@ -23,6 +23,10 @@ SUMMARY_DIR = pathlib.Path('/fastgenomics/summary')
 logger = getLogger('fastgenomics.io')
 
 
+class NotSupportedError(Exception):
+    pass
+
+
 def assert_manifest_is_valid(config: dict):
     """
     Asserts that the manifest (manifest.json) matches our JSON-Schema.
@@ -97,8 +101,15 @@ def get_output_path(output_key: str) -> pathlib.Path:
         with my_path_object.open('w') as f_out:
             f_out.write("something")
     """
+    manifest = get_app_manifest()
+
+    # check application type
+    if manifest['Type'] != 'Calculation':
+        err_msg = f"File output for '{manifest['Type']}' applications not supported!"
+        raise NotSupportedError(err_msg)
+
     # get output_file_mapping
-    output_file_mapping = get_app_manifest()['Output']
+    output_file_mapping = manifest['Output']
     if output_key not in output_file_mapping:
         err_msg = f"Key '{output_key}' not defined in manifest.json!"
         logger.error(err_msg)
@@ -119,6 +130,13 @@ def get_summary_path() -> pathlib.Path:
     Gets the location of the summary file and returns it as a pathlib object.
     Please store your summary as commonMark into this file
     """
+    manifest = get_app_manifest()
+
+    # check application type
+    if manifest['Type'] != 'Calculation':
+        err_msg = f"File output for '{manifest['Type']}' applications not supported!"
+        raise NotSupportedError(err_msg)
+
     output_file = SUMMARY_DIR / 'summary.md'
 
     # check for existence

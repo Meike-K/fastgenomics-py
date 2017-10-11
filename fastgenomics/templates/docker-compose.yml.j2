@@ -9,5 +9,7 @@ services:
     volumes:
       - ./{{ sample_dir }}/config:/fastgenomics/config/:ro
       - ./{{ sample_dir }}/data:/fastgenomics/data/:ro
+{%- if app_type == 'Calculation' %}
       - ./{{ sample_dir }}/output:/fastgenomics/output/
       - ./{{ sample_dir }}/summary:/fastgenomics/summary/
+{% endif %}

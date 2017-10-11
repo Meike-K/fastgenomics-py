@@ -25,22 +25,33 @@ logger = getLogger('fastgenomics.testing')
 
 
 def check_app_structure(app_dir: pathlib.Path):
-    """checks the structure of your app"""
-    logger.info(f"Checking app-structure in {app_dir}")
+    """checks the structure of your app - only checks for mandatory files and directories"""
+    # check manifest.json
+    logger.info(f"Checking manifest.json in {app_dir}")
     assert (app_dir / 'manifest.json').exists(), "manifest.json is missing!"
     manifest = fg_io.get_app_manifest(app_dir)
     fg_io.assert_manifest_is_valid(manifest)
 
+    # check directory structure
+    logger.info(f"Checking app-structure in {app_dir}")
     assert (app_dir / 'Dockerfile').exists(), "Dockerfile is missing!"
-    assert (app_dir / 'readme.md').exists(), "readme.md is missing!"
+    assert (app_dir / 'README.md').exists(), "README.md is missing!"
+    if not (app_dir / 'requirements.txt').exists():
+        logger.warning("No requirements.txt found - please provide list of requirements!")
+
+    logger.info(f"Checking sample_data in {app_dir}")
+    # define valid directories
+    valid_sample_data_dirs = ['data', 'config']
+    if manifest['Type'] == 'Calculation':
+        valid_sample_data_dirs += ['output', 'summary']
+
+    # check for sample_data
     sample_dir = app_dir / 'sample_data'
     if not sample_dir.exists():
         logger.warning("No sample_data found - please provide sample data!")
     else:
-        for sub_dir in ['config', 'data', 'output', 'summary']:
+        for sub_dir in valid_sample_data_dirs:
             assert (sample_dir / sub_dir).exists(), f"sample_data subdirectory {sub_dir} is missing!"
-    if not (app_dir / 'requirements.txt').exists():
-        logger.warning("No requirements.txt found - please provide list of requirements!")
 
 
 def create_docker_compose(app_dir: pathlib.Path, app_name: pathlib.Path, sample_dir: pathlib.Path,
@@ -54,6 +65,10 @@ def create_docker_compose(app_dir: pathlib.Path, app_name: pathlib.Path, sample_
         logger.warning(f"{docker_compose_file.name} already existing! Aborting.")
         return
 
+    # get app type
+    manifest = fg_io.get_app_manifest(app_dir)
+    app_type = manifest['Type']
+
     logger.info("Loading docker-compose.yml template")
     with open(TEMPLATE_DIR / 'docker-compose.yml.j2') as f_temp:
         template = jinja2.Template(f_temp.read())
@@ -61,7 +76,7 @@ def create_docker_compose(app_dir: pathlib.Path, app_name: pathlib.Path, sample_
     logger.info(f"Writing {docker_compose_file}")
     with docker_compose_file.open('w') as f_out:
         temp = template.render(app_name=app_name, sample_dir=sample_dir.relative_to(app_dir),
-                               docker_registry=docker_registry)
+                               docker_registry=docker_registry, app_type=app_type)
         f_out.write(temp)
 
 
