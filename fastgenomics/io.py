@@ -71,7 +71,7 @@ def get_input_path(input_key: str) -> pathlib.Path:
     if not input_file_mapping:
         with open(CONFIG_DIR / 'input_file_mapping.json') as f:
             input_file_mapping = json.load(f)
-            source_str = f"file '{input_file_mapping}'"
+            source_str = "file 'input_file_mapping.json'"
 
     # check for key in mapping
     if input_key not in input_file_mapping:
