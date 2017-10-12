@@ -36,6 +36,9 @@ def check_app_structure(app_dir: pathlib.Path):
     logger.info(f"Checking app-structure in {app_dir}")
     assert (app_dir / 'Dockerfile').exists(), "Dockerfile is missing!"
     assert (app_dir / 'README.md').exists(), "README.md is missing!"
+    if not (app_dir / 'LICENSE').exists():
+        logger.warning("'LICENSE' file found - please provide LICENSE text "
+                       "including all third-party libraries!")
     if not (app_dir / 'requirements.txt').exists():
         logger.warning("No requirements.txt found - please provide list of requirements!")
 
