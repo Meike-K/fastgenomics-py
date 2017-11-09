@@ -37,7 +37,7 @@
       "properties": {
         "Type": {
           "description": "Type of the value of the parameter",
-          "enum": ["string", "integer", "float"]
+          "enum": ["string", "integer", "float", "bool"]
         },
         "Description": {
           "description": "Description of the parameter",
