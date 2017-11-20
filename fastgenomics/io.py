@@ -14,11 +14,19 @@ __version__ = get_distribution('fastgenomics')
 # set paths
 RESOURCES_PATH = pathlib.Path(__file__).parent
 SCHEMA_DIR = RESOURCES_PATH / 'schemes'
-APP_ROOT_DIR = pathlib.Path('/app')
-DATA_DIR = pathlib.Path('/fastgenomics/data')
-CONFIG_DIR = pathlib.Path('/fastgenomics/config')
-OUTPUT_DIR = pathlib.Path('/fastgenomics/output')
-SUMMARY_DIR = pathlib.Path('/fastgenomics/summary')
+
+APP_ROOT_DIR = pathlib.Path(os.environ.get("FG_APP_DIR", "/app"))
+
+print(f"Using {APP_ROOT_DIR} as app directory")
+
+DATA_ROOT_DIR = pathlib.Path(os.environ.get("FG_DATA_ROOT", "/fastgenomics"))
+
+print(f"Using {DATA_ROOT_DIR} as data root")
+
+DATA_DIR = DATA_ROOT_DIR / pathlib.Path('data')
+CONFIG_DIR = DATA_ROOT_DIR / pathlib.Path('config')
+OUTPUT_DIR = DATA_ROOT_DIR / pathlib.Path('output')
+SUMMARY_DIR = DATA_ROOT_DIR / pathlib.Path('summary')
 
 logger = getLogger('fastgenomics.io')
 
