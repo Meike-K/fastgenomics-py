@@ -41,6 +41,22 @@ my_output_path = fg_io.get_output_path('my_output_key')
 
 ```
 
+# Testing without docker
+If you want to work without docker, your paths will likely not match /fastgenomics for data and /app for your manifest. You can set two environment variables to ease testing:
+- APP_ROOT_DIR: This path should contain manifest.json, normally this is /app.
+- DATA_ROOT_DIR: This path should contain you test data - normally, this is /fastgenomics.
+
+e.g. 
+``` python
+import os
+os.environ("APP_ROOT_DIR") = "/usr/local/sample_app/"
+os.environ("DATA_ROOT_DIR") = "/usr/local/sample_app/data"
+
+# load fastgenomicy-py when the environment variables are set.
+from fastgenomics import io as fg_io 
+```
+# App-Checker
+
 Additionally it comes with an app-checker `check_my_app`, which checks for you:
  * the app directory structure
  * manifest.json
