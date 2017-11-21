@@ -1,5 +1,9 @@
 """
 FASTGenomics IO helper: Wraps input/output of input_file_mapping and parameters given by the FASTGenomics runtime.
+
+If you want to work without docker, you can set two environment variables to ease testing:
+APP_ROOT_DIR: This path should contain manifest.json, normally this is /app.
+DATA_ROOT_DIR: This path should contain you test data - normally, this is /fastgenomics.
 """
 import os
 import pathlib
