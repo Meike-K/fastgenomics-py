@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 import sys
 
-if sys.version_info < (3, 6):
-    sys.exit("Sorry - python < 3.6 not supported")
+if not sys.version_info[:2] >= (3,6):
+    sys.exit("Sorry - python < 3.6 not supported. Your version is: " + str(sys.version_info))
 
 import pathlib
 from setuptools import setup
 
 
-VERSION = '0.3.1'  # scheme: breaking major, non-breaking feature, fix
+VERSION = '0.3.2'  # scheme: breaking major, non-breaking feature, fix
 
 
 with open(pathlib.Path(__file__).parent / 'requirements.txt') as f_req:
