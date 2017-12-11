@@ -58,3 +58,11 @@ def test_can_have_different_type(monkeypatch):
     parameters = fg_io.get_parameters()
 
     assert 1 == parameters["StrValue"]
+
+
+def test_assert_manifest_is_valid(monkeypatch):
+    _setup_env(monkeypatch)
+
+    from fastgenomics import io as fg_io
+
+    fg_io.get_app_manifest()

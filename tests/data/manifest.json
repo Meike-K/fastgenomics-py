@@ -4,9 +4,9 @@
     "Type": "Calculation",
     "Class": "Classification",
     "Author": {
-      "Name": "Christian Sauer, Jenny Balfer",
-      "Email": "christian.sauer@comma-soft.com",
-      "Organisation": "Comma Soft AG"
+      "Name": "some name",
+      "Email": "some email",
+      "Organisation": "some company"
     },
     "Description": "Test for batch effects via classification using a random forest",
     "License": "MIT",

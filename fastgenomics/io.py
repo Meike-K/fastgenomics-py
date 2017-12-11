@@ -51,6 +51,16 @@ def assert_manifest_is_valid(config: dict):
         schema = json.load(f)
     jsonschema.validate(config, schema)
 
+    parameters = config["FASTGenomicsApplication"]["Parameters"]
+    if parameters is not None:
+        for name, properties in parameters.items():
+            expected_type = properties["Type"]
+            default_value = properties["Default"]
+            if not _value_is_of_type(expected_type, default_value):
+                logger.warning(f"The default parameter {name} has a different value than expected. "
+                               f"It should be {expected_type} but is {type(default_value)}. "
+                               f"The value is accessible but beware!")
+
 
 def get_app_manifest(app_dir: pathlib.Path = APP_ROOT_DIR) -> dict:
     """
@@ -184,7 +194,8 @@ def _load_parameters():
 
     _check_all_custom_parameters_are_in_manifest(custom_parameters, parameters)
 
-    _check_parmeter_types(custom_parameters, parameters)
+    parameter_types = _get_parameter_types_from_manifest()
+    _check_parameter_types(custom_parameters, parameters, parameter_types)
 
     _overwrite_manifest_parameters_with_custom_parameters(custom_parameters, parameters)
 
@@ -210,28 +221,38 @@ def _overwrite_manifest_parameters_with_custom_parameters(custom_parameters, par
         parameters[parameter] = custom_parameters[parameter]
 
 
-def _check_parmeter_types(custom_parameters, parameters):
+def _value_is_of_type(expected_type: str, value) -> bool:
+    # known types from json schema
+    return {
+        'float': lambda x: isinstance(x, (int, float)),
+        'integer': lambda x: isinstance(x, int),
+        'bool': lambda x: isinstance(x, bool),
+        'string': lambda x: isinstance(x, str),
+    }[expected_type](value)
+
+
+def _check_parameter_types(custom_parameters, parameters, parameter_types):
     for parameter in parameters:
         if parameter not in custom_parameters:
             continue
             # this is ok, just no custom value specified
-        value = parameters[parameter]
-        value_type = type(value)
-
         custom_value = custom_parameters[parameter]
-        if not isinstance(custom_value, value_type):
+
+        expected_type = parameter_types[parameter]
+        # parameter types see manifest_schema.json
+        if not _value_is_of_type(expected_type, custom_value):
             # we do not throw an exception because having multi-value parameters is
             #  common in some libraries, e.g. specify "red" or 24342
             logger.warning(f"The custom parameter {parameter} has a different value than expected. "
-                           f"It should be {value_type} but is {type(custom_value)}. "
+                           f"It should be {expected_type} but is {type(custom_value)}. "
                            f"The value is accessible but beware!")
 
 
 def _check_all_custom_parameters_are_in_manifest(custom_parameters, parameters):
     manifest_parameter_keys = set(parameters.keys())
     custom_parameter_keys = set(custom_parameters.keys())
-    if not manifest_parameter_keys == custom_parameter_keys:
-        extra_custom_keys = custom_parameter_keys.difference(manifest_parameter_keys)
+    extra_custom_keys = custom_parameter_keys.difference(manifest_parameter_keys)
+    if len(extra_custom_keys) > 0:
         logger.warning(
             f"{PARAMETERS_FILE} contains extra keys which are net specified in the manifest, "
             f"We are ignoring them. Keys {extra_custom_keys}")
@@ -240,6 +261,12 @@ def _check_all_custom_parameters_are_in_manifest(custom_parameters, parameters):
 def _get_default_parameters_from_manifest():
     temp = get_app_manifest()['Parameters']
     parameters = {param: value.get('Default') for param, value in temp.items()}
+    return parameters
+
+
+def _get_parameter_types_from_manifest():
+    temp = get_app_manifest()['Parameters']
+    parameters = {param: value.get('Type') for param, value in temp.items()}
     return parameters
 
 
