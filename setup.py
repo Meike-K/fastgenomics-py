@@ -8,7 +8,7 @@ import pathlib
 from setuptools import setup
 
 
-VERSION = '0.3.2'  # scheme: breaking major, non-breaking feature, fix
+VERSION = '0.3.3'  # scheme: breaking major, non-breaking feature, fix
 
 
 with open(pathlib.Path(__file__).parent / 'requirements.txt') as f_req:
