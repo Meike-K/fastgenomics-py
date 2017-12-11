@@ -1,0 +1,43 @@
+{
+  "FASTGenomicsApplication": {
+    "Name": "Batch effect classifier",
+    "Type": "Calculation",
+    "Class": "Classification",
+    "Author": {
+      "Name": "Christian Sauer, Jenny Balfer",
+      "Email": "christian.sauer@comma-soft.com",
+      "Organisation": "Comma Soft AG"
+    },
+    "Description": "Test for batch effects via classification using a random forest",
+    "License": "MIT",
+    "Parameters": {
+      "StrValue": {
+        "Type": "string",
+        "Default": "batch_id",
+        "Description": "The column denoting the batches"
+      },
+      "IntValue": {
+        "Type": "integer",
+        "Default": 150,
+        "Description": "Number of Dimensions"
+      },
+      "FloatValue": {
+        "Type": "float",
+        "Default": 100.0,
+        "Description": "Number of samples"
+      },
+      "BoolValue": {
+        "Type": "bool",
+        "Default": true,
+        "Description": "Number of samples"
+      }
+    },
+    "Demands": [
+      "CPU"
+    ],
+    "Input": {
+    },
+    "Output": {
+    }
+  }
+}

@@ -11,9 +11,9 @@ import json
 import jsonschema
 
 from logging import getLogger
-from pkg_resources import get_distribution
+import pkg_resources
 
-__version__ = get_distribution('fastgenomics')
+__version__ = pkg_resources.get_distribution('fastgenomics')
 
 # set paths
 RESOURCES_PATH = pathlib.Path(__file__).parent
@@ -31,8 +31,11 @@ DATA_DIR = DATA_ROOT_DIR / pathlib.Path('data')
 CONFIG_DIR = DATA_ROOT_DIR / pathlib.Path('config')
 OUTPUT_DIR = DATA_ROOT_DIR / pathlib.Path('output')
 SUMMARY_DIR = DATA_ROOT_DIR / pathlib.Path('summary')
+PARAMETERS_FILE = CONFIG_DIR / 'parameters.json'
 
 logger = getLogger('fastgenomics.io')
+
+_PARAMETERS = None
 
 
 class NotSupportedError(Exception):
@@ -161,28 +164,90 @@ def get_summary_path() -> pathlib.Path:
 
 def get_parameters() -> dict:
     """Returns a dict of all parameters provided by parameters.json or defaults in manifest.json"""
-    params_file = CONFIG_DIR / 'parameters.json'
+    global _PARAMETERS
 
-    # load parameters from parameters.json:
-    if params_file.exists():
-        raise NotImplementedError("We don't have parameters yet")
+    if _PARAMETERS is None:
+        parameters = _load_parameters()
+        _PARAMETERS = parameters
 
-    # use defaults from manifest.json:
-    else:
-        # TODO: change to warning when parameters are implemented
-        logger.debug("parameters.json not provided - using defaults")
+    return _PARAMETERS
 
-        temp = get_app_manifest()['Parameters']
-        parameters = {param: value.get('Default') for param, value in temp.items()}
+
+def _load_parameters():
+    parameters = _get_default_parameters_from_manifest()
+
+    if not PARAMETERS_FILE.exists():
+        logger.info(f"No custom parameters found - {PARAMETERS_FILE} does not exist")
+        return parameters
+
+    custom_parameters = _load_custom_parameters()
+
+    _check_all_custom_parameters_are_in_manifest(custom_parameters, parameters)
+
+    _check_parmeter_types(custom_parameters, parameters)
+
+    _overwrite_manifest_parameters_with_custom_parameters(custom_parameters, parameters)
+
+    return parameters
+
+
+def _load_custom_parameters():
+    try:
+        custom_parameters = json.loads(PARAMETERS_FILE.read_text())
+    except Exception as ex:
+        logger.exception(
+            f"Could not read {PARAMETERS_FILE} due to an unexpected error. "
+            f"Please report this at https://github.com/FASTGenomics/fastgenomics-py/issues")
+        raise ex
+    return custom_parameters
+
+
+def _overwrite_manifest_parameters_with_custom_parameters(custom_parameters, parameters):
+    for parameter in parameters:
+        if parameter not in custom_parameters:
+            continue
+
+        parameters[parameter] = custom_parameters[parameter]
+
+
+def _check_parmeter_types(custom_parameters, parameters):
+    for parameter in parameters:
+        if parameter not in custom_parameters:
+            continue
+            # this is ok, just no custom value specified
+        value = parameters[parameter]
+        value_type = type(value)
+
+        custom_value = custom_parameters[parameter]
+        if not isinstance(custom_value, value_type):
+            # we do not throw an exception because having multi-value parameters is
+            #  common in some libraries, e.g. specify "red" or 24342
+            logger.warning(f"The custom parameter {parameter} has a different value than expected. "
+                           f"It should be {value_type} but is {type(custom_value)}. "
+                           f"The value is accessible but beware!")
+
+
+def _check_all_custom_parameters_are_in_manifest(custom_parameters, parameters):
+    manifest_parameter_keys = set(parameters.keys())
+    custom_parameter_keys = set(custom_parameters.keys())
+    if not manifest_parameter_keys == custom_parameter_keys:
+        extra_custom_keys = custom_parameter_keys.difference(manifest_parameter_keys)
+        logger.warning(
+            f"{PARAMETERS_FILE} contains extra keys which are net specified in the manifest, "
+            f"We are ignoring them. Keys {extra_custom_keys}")
+
+
+def _get_default_parameters_from_manifest():
+    temp = get_app_manifest()['Parameters']
+    parameters = {param: value.get('Default') for param, value in temp.items()}
     return parameters
 
 
 def get_parameter(param_key: str):
     """Returns the parameter 'param_key' from the parameters file or manifest.json"""
     parameters = get_parameters()
-    params_file = CONFIG_DIR / 'parameters.json'
 
     # check for existence
     if param_key not in parameters:
-        raise ValueError(f"Parameter {param_key} not defined in {params_file}")
+        raise ValueError(f"Parameter {param_key} not defined in {PARAMETERS_FILE}")
     return parameters[param_key]
