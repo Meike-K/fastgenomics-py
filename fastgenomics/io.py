@@ -2,9 +2,11 @@
 FASTGenomics IO helper: Wraps input/output of input_file_mapping and parameters given by the FASTGenomics runtime.
 
 If you want to work without docker, you can set two environment variables to ease testing:
-APP_ROOT_DIR: This path should contain manifest.json, normally this is /app.
-DATA_ROOT_DIR: This path should contain you test data - normally, this is /fastgenomics.
+
+``APP_ROOT_DIR``: This path should contain manifest.json, normally this is /app.
+``DATA_ROOT_DIR``: This path should contain you test data - normally, this is /fastgenomics.
 """
+
 import os
 import pathlib
 import json
@@ -15,25 +17,23 @@ import pkg_resources
 
 __version__ = pkg_resources.get_distribution('fastgenomics')
 
+logger = getLogger('fastgenomics.io')
+
 # set paths
 RESOURCES_PATH = pathlib.Path(__file__).parent
 SCHEMA_DIR = RESOURCES_PATH / 'schemes'
 
 APP_ROOT_DIR = pathlib.Path(os.environ.get("FG_APP_DIR", "/app"))
-
-print(f"Using {APP_ROOT_DIR} as app directory")
-
 DATA_ROOT_DIR = pathlib.Path(os.environ.get("FG_DATA_ROOT", "/fastgenomics"))
 
-print(f"Using {DATA_ROOT_DIR} as data root")
+logger.info(f"Using {APP_ROOT_DIR} as app directory")
+logger.info(f"Using {DATA_ROOT_DIR} as data root")
 
 DATA_DIR = DATA_ROOT_DIR / pathlib.Path('data')
 CONFIG_DIR = DATA_ROOT_DIR / pathlib.Path('config')
 OUTPUT_DIR = DATA_ROOT_DIR / pathlib.Path('output')
 SUMMARY_DIR = DATA_ROOT_DIR / pathlib.Path('summary')
 PARAMETERS_FILE = CONFIG_DIR / 'parameters.json'
-
-logger = getLogger('fastgenomics.io')
 
 _PARAMETERS = None
 
@@ -44,8 +44,8 @@ class NotSupportedError(Exception):
 
 def assert_manifest_is_valid(config: dict):
     """
-    Asserts that the manifest (manifest.json) matches our JSON-Schema.
-    If not a jsonschema.ValidationError will be raised.
+    Asserts that the manifest (``manifest.json``) matches our JSON-Schema.
+    If not a ``jsonschema.ValidationError`` will be raised.
     """
     with open(SCHEMA_DIR / 'manifest_schema.json') as f:
         schema = json.load(f)
@@ -85,8 +85,8 @@ def get_app_manifest(app_dir: pathlib.Path = APP_ROOT_DIR) -> dict:
 
 def get_input_path(input_key: str) -> pathlib.Path:
     """
-    Gets the location of a input file and returns it as pathlib object
-    Keep in mind, that you have to define your input files in your manifest.json in advance!
+    Gets the location of a input file and returns it as pathlib object.
+    Keep in mind that you have to define your input files in your ``manifest.json`` in advance!
     """
     # try to get input file mapping from environment
     input_file_mapping = json.loads(os.environ.get('INPUT_FILE_MAPPING', '{}'))
@@ -117,10 +117,10 @@ def get_input_path(input_key: str) -> pathlib.Path:
 
 def get_output_path(output_key: str) -> pathlib.Path:
     """
-    Gets the location of the output file and returns it as a pathlib object.
-    Keep in mind, that you have to define your output files in your manifest.json in advance!
+    Gets the location of the output file and returns it as a ``pathlib.Path``.
+    Keep in mind that you have to define your output files in your ``manifest.json`` in advance!
 
-    You can use this path-object to write your output as follows:
+    You can use this path-object to write your output as follows::
 
         my_path_object = get_output_path('my_output_key')
         with my_path_object.open('w') as f_out:
@@ -153,7 +153,7 @@ def get_output_path(output_key: str) -> pathlib.Path:
 def get_summary_path() -> pathlib.Path:
     """
     Gets the location of the summary file and returns it as a pathlib object.
-    Please store your summary as commonMark into this file
+    Please write your summary as CommonMark-compatible Markdown into this file.
     """
     manifest = get_app_manifest()
 
