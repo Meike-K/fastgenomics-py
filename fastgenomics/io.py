@@ -227,6 +227,8 @@ def _value_is_of_type(expected_type: str, value) -> bool:
         'float': lambda x: isinstance(x, (int, float)),
         'integer': lambda x: isinstance(x, int),
         'bool': lambda x: isinstance(x, bool),
+        'list': lambda x: isinstance(x, list),
+        'dict': lambda x: isinstance(x, dict),
         'string': lambda x: isinstance(x, str),
     }[expected_type](value)
 

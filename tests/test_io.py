@@ -23,7 +23,13 @@ def test_io_get_parameters_from_manifest(monkeypatch):
     assert parameters["FloatValue"] == float(100)
 
     assert "BoolValue" in parameters
-    assert parameters["BoolValue"] == True
+    assert parameters["BoolValue"] is True
+
+    assert "ListValue" in parameters
+    assert parameters["ListValue"] == [1, 2, 3]
+
+    assert "DictValue" in parameters
+    assert parameters["DictValue"] == {"foo": 42, "bar": "answer to everything"}
 
     del fg_io
 

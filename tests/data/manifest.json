@@ -30,6 +30,16 @@
         "Type": "bool",
         "Default": true,
         "Description": "Number of samples"
+      },
+      "ListValue": {
+        "Type": "list",
+        "Default": [1, 2, 3],
+        "Description": "List of values"
+      },
+      "DictValue": {
+        "Type": "dict",
+        "Default": {"foo": 42, "bar": "answer to everything"},
+        "Description": "Dict of key-value-pairs"
       }
     },
     "Demands": [
