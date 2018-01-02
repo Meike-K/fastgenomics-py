@@ -20,7 +20,8 @@ This python module handles all common interfaces of your application to the FAST
 and provides some convenience functions.
 
 Example:
-``` python
+
+```python
 from fastgenomics import io as fg_io
 
 # get all parameters
@@ -38,31 +39,47 @@ with my_input_path.open() as f:
 # store a file
 my_output_path = fg_io.get_output_path('my_output_key')
 ...
-
 ```
 
 # Testing without docker
-If you want to work without docker, your paths will likely not match /fastgenomics for data and /app for your manifest. You can set two environment variables to ease testing:
-- APP_ROOT_DIR: This path should contain manifest.json, normally this is /app.
-- DATA_ROOT_DIR: This path should contain you test data - normally, this is /fastgenomics.
+If you want to work without docker, your paths will likely not match `/fastgenomics` for data and `/app` for your manifest. You can set two environment variables to ease testing:
 
-e.g. 
-``` python
+- `FG_APP_DIR`: This path should contain `manifest.json`, normally this is `/app`.
+
+    ```
+    $FG_APP_DIR/manifest.json
+    ```
+
+- `FG_DATA_ROOT`: This path should contain you test data and output directories - normally, this is `/fastgenomics`.
+
+    ```
+    $FG_DATA_ROOT/data/...
+    $FG_DATA_ROOT/config/parameters.json
+    $FG_DATA_ROOT/output/
+    $FG_DATA_ROOT/summary/
+    ```
+
+e.g.
+
+```python
 import os
-os.environ("APP_ROOT_DIR") = "/usr/local/sample_app/"
-os.environ("DATA_ROOT_DIR") = "/usr/local/sample_app/data"
+os.environ["FG_APP_DIR"] = "/usr/local/sample_app/"
+os.environ["FG_DATA_ROOT"] = "/usr/local/sample_app/data"
 
 # load fastgenomicy-py when the environment variables are set.
 from fastgenomics import io as fg_io 
 ```
+
 # App-Checker
 
 Additionally it comes with an app-checker `check_my_app`, which checks for you:
+
  * the app directory structure
  * manifest.json
 
 Usage:
-``` txt
+
+```
 check_my_app [-h] [--input [APP_DIR]] -n APP_NAME [-r DOCKER_REGISTRY] [-d] [-f]
 
 FASTGenomics App Checker
@@ -81,9 +98,10 @@ optional arguments:
 Just run `check_my_app --name <my_new_app>` and check it.
 
 It can create for you:
- * a `docker-compose.yml`
- * the `input_file_mappings.json` for your sample data
 
- Just run `check_my_app --name <my_new_app> -d -f` to create both.
+* a `docker-compose.yml`
+* the `input_file_mappings.json` for your sample data
+
+Just run `check_my_app --name <my_new_app> -d -f` to create both.
 
 For more details see our [Hello Genomics Python App](https://github.com/fastgenomics/hello_genomics_calc_py36).
