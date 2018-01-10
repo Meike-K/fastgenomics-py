@@ -1,14 +1,4 @@
-import pathlib
-
-import pkg_resources
-import os
-
-APP_DIR = os.path.join(os.path.dirname(__file__), "data/")
-
-
-def test_io_get_parameters_from_manifest(monkeypatch):
-    _setup_env(monkeypatch)
-
+def test_io_get_parameters_from_manifest(fg_env):
     from fastgenomics import io as fg_io
     fg_io._PARAMETERS = None
 
@@ -31,34 +21,23 @@ def test_io_get_parameters_from_manifest(monkeypatch):
     assert "DictValue" in parameters
     assert parameters["DictValue"] == {"foo": 42, "bar": "answer to everything"}
 
-    del fg_io
 
-
-def _setup_env(monkeypatch):
-    monkeypatch.setattr(pkg_resources, 'get_distribution', lambda x: "-1")
-    monkeypatch.setenv("FG_APP_DIR", APP_DIR)
-
-
-def test_io_get_parameters_from_manifest_and_parameters(monkeypatch):
-    _setup_env(monkeypatch)
-
+def test_io_get_parameters_from_manifest_and_parameters(fg_env, app_dir):
     from fastgenomics import io as fg_io
 
     fg_io._PARAMETERS = None
-    fg_io.PARAMETERS_FILE = pathlib.Path(APP_DIR) / "parameters.json"
+    fg_io.PARAMETERS_FILE = app_dir / "parameters.json"
 
     parameters = fg_io.get_parameters()
 
     assert "BETTER" == parameters["StrValue"]
 
 
-def test_can_have_different_type(monkeypatch):
-    _setup_env(monkeypatch)
-
+def test_can_have_different_type(fg_env, app_dir, monkeypatch):
     from fastgenomics import io as fg_io
 
     fg_io._PARAMETERS = None
-
+    fg_io.PARAMETERS_FILE = app_dir / "parameters.json"
     monkeypatch.setattr(fg_io, "_load_custom_parameters", lambda: {"StrValue": 1})
 
     parameters = fg_io.get_parameters()
@@ -66,9 +45,7 @@ def test_can_have_different_type(monkeypatch):
     assert 1 == parameters["StrValue"]
 
 
-def test_assert_manifest_is_valid(monkeypatch):
-    _setup_env(monkeypatch)
-
+def test_assert_manifest_is_valid(fg_env):
     from fastgenomics import io as fg_io
 
     fg_io.get_app_manifest()
