@@ -63,11 +63,12 @@ e.g.
 
 ```python
 import os
-os.environ["FG_APP_DIR"] = "/usr/local/sample_app/"
-os.environ["FG_DATA_ROOT"] = "/usr/local/sample_app/data"
 
-# load fastgenomicy-py when the environment variables are set.
-from fastgenomics import io as fg_io 
+# set paths for local development *before* importing fastgenomics 
+os.environ["FG_APP_DIR"] = "/abs_path/to/my_app/"
+os.environ["FG_DATA_ROOT"] = "/abs_path/to/my/sample_data"
+
+from fastgenomics import io as fg_io
 ```
 
 # App-Checker
