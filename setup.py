@@ -34,7 +34,6 @@ for item in parsed_requirements:
 
 setup(name='FASTGenomics',
       version=VERSION,
-      scripts=['fastgenomics/bin/check_my_app'],
       description='FASTGenomics python helper',
       author='FASTGenomics Team',
       author_email='contact@fastgenomics.org',

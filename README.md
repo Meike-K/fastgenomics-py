@@ -10,6 +10,8 @@
 
 ---
 
+[![Build Status](https://travis-ci.org/FASTGenomics/fastgenomics-py.png?branch=master)](https://travis-ci.org/FASTGenomics/fastgenomics-py)
+
 # About
 
 This python module handles all common interfaces of your application to the FASTGenomics runtime:
@@ -70,39 +72,5 @@ os.environ["FG_DATA_ROOT"] = "/abs_path/to/my/sample_data"
 
 from fastgenomics import io as fg_io
 ```
-
-# App-Checker
-
-Additionally it comes with an app-checker `check_my_app`, which checks for you:
-
- * the app directory structure
- * manifest.json
-
-Usage:
-
-```
-check_my_app [-h] [--input [APP_DIR]] -n APP_NAME [-r DOCKER_REGISTRY] [-d] [-f]
-
-FASTGenomics App Checker
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --input [APP_DIR]     Path to your application
-  -n APP_NAME, --name APP_NAME
-                        Path to sample_data
-  -r DOCKER_REGISTRY, --registry DOCKER_REGISTRY
-                        URL of the docker-registry
-  -d, --docker          create docker-compose.yml
-  -f, --filemapping     create input_file_mapping.json
-```
-
-Just run `check_my_app --name <my_new_app>` and check it.
-
-It can create for you:
-
-* a `docker-compose.yml`
-* the `input_file_mappings.json` for your sample data
-
-Just run `check_my_app --name <my_new_app> -d -f` to create both.
 
 For more details see our [Hello Genomics Python App](https://github.com/fastgenomics/hello_genomics_calc_py36).
