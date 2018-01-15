@@ -10,6 +10,8 @@
 
 ---
 
+[![Build Status](https://travis-ci.org/FASTGenomics/fastgenomics-py.png?branch=master)](https://travis-ci.org/FASTGenomics/fastgenomics-py)
+
 # About
 
 This python module handles all common interfaces of your application to the FASTGenomics runtime:
