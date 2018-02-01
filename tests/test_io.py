@@ -1,10 +1,18 @@
-def test_io_get_parameters_from_manifest(fg_env):
-    from fastgenomics import io as fg_io
-    fg_io._PARAMETERS = None
+import fastgenomics.io as fg_io
 
+
+def test_init_paths(local):
+    fg_io.set_paths()
+
+
+def test_custom_init_paths(local, app_dir, data_root):
+    fg_io.set_paths(app_dir, data_root)
+
+
+def test_io_get_parameters(local):
     parameters = fg_io.get_parameters()
     assert "StrValue" in parameters
-    assert parameters["StrValue"] == "batch_id"
+    assert parameters["StrValue"] == "hello from parameters.json"
 
     assert "IntValue" in parameters
     assert parameters["IntValue"] == 150
@@ -22,30 +30,14 @@ def test_io_get_parameters_from_manifest(fg_env):
     assert parameters["DictValue"] == {"foo": 42, "bar": "answer to everything"}
 
 
-def test_io_get_parameters_from_manifest_and_parameters(fg_env, app_dir):
-    from fastgenomics import io as fg_io
-
-    fg_io._PARAMETERS = None
-    fg_io.PARAMETERS_FILE = app_dir / "parameters.json"
-
-    parameters = fg_io.get_parameters()
-
-    assert "BETTER" == parameters["StrValue"]
-
-
-def test_can_have_different_type(fg_env, app_dir, monkeypatch):
-    from fastgenomics import io as fg_io
-
-    fg_io._PARAMETERS = None
-    fg_io.PARAMETERS_FILE = app_dir / "parameters.json"
-    monkeypatch.setattr(fg_io, "_load_custom_parameters", lambda: {"StrValue": 1})
+def test_can_have_different_type(local, monkeypatch):
+    monkeypatch.setattr("fastgenomics.io._load_custom_parameters", lambda x: {"StrValue": 1})
 
     parameters = fg_io.get_parameters()
 
     assert 1 == parameters["StrValue"]
 
 
-def test_assert_manifest_is_valid(fg_env):
-    from fastgenomics import io as fg_io
-
+def test_assert_manifest_is_valid(local):
     fg_io.get_app_manifest()
+
