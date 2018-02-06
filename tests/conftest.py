@@ -30,7 +30,7 @@ def local(monkeypatch):
     """patches the paths for local testing"""
     monkeypatch.setattr("fastgenomics.io.DEFAULT_APP_DIR", str(APP_DIR))
     monkeypatch.setattr("fastgenomics.io.DEFAULT_DATA_ROOT", str(DATA_ROOT))
-    monkeypatch.setattr("fastgenomics.io.PATHS", get_local_paths())
+    monkeypatch.setattr("fastgenomics.io._PATHS", get_local_paths())
     monkeypatch.setattr("fastgenomics.io._PARAMETERS", None)
 
 

@@ -29,9 +29,9 @@ def check_app_structure(app_dir: pathlib.Path):
     # check manifest.json
     logger.info(f"Checking manifest.json in {app_dir}")
     assert (app_dir / 'manifest.json').exists(), "manifest.json is missing!"
-    manifest = fg_io.get_app_manifest(app_dir)
-    # This is already done in get_app_manifest, but let’s make sure this is tested
-    fg_io.assert_manifest_is_valid(dict(FASTGenomicsApplication=manifest))
+    manifest = fg_io._get_app_manifest(app_dir)
+    # This is already done in _get_app_manifest, but let’s make sure this is tested
+    fg_io._assert_manifest_is_valid(dict(FASTGenomicsApplication=manifest))
 
     # check directory structure
     logger.info(f"Checking app-structure in {app_dir}")
@@ -70,7 +70,7 @@ def create_docker_compose(app_dir: pathlib.Path, app_name: pathlib.Path, sample_
         return
 
     # get app type
-    manifest = fg_io.get_app_manifest(app_dir)
+    manifest = fg_io._get_app_manifest(app_dir)
     app_type = manifest['Type']
 
     logger.info("Loading docker-compose.yml template")
@@ -100,7 +100,7 @@ def create_file_mapping(app_dir: pathlib.Path, sample_dir: pathlib.Path):
     file_mapping_file.parent.mkdir(parents=True, exist_ok=True)
 
     # create file_mappings
-    manifest = fg_io.get_app_manifest(app_dir)
+    manifest = fg_io._get_app_manifest(app_dir)
     input_keys = manifest['Input'].keys()
     file_mapping = {key: sample_output_dir / 'fix_me.txt' for key in input_keys}
 

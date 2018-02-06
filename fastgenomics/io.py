@@ -6,7 +6,7 @@ If you want to work without docker, you can set two environment variables to eas
 ``APP_ROOT_DIR``: This path should contain manifest.json, normally this is /app.
 ``DATA_ROOT_DIR``: This path should contain you test data - normally, this is /fastgenomics.
 
-You can set them by environment varibles or just call ``fg_io.set_paths(path_to_app, path_to_data_root)``
+You can set them by environment variables or just call ``fg_io.set_paths(path_to_app, path_to_data_root)``
 """
 
 import os
@@ -23,6 +23,24 @@ __version__ = pkg_resources.get_distribution('fastgenomics')
 logger = getLogger('fastgenomics.io')
 
 
+# get package paths
+RESOURCES_PATH = pathlib.Path(__file__).parent
+SCHEMA_DIR = RESOURCES_PATH / 'schemes'
+
+# set default paths
+DEFAULT_APP_DIR = '/app'
+DEFAULT_DATA_ROOT = '/fastgenomics'
+
+# init cache
+_PATHS = None
+_MANIFEST = None
+_PARAMETERS = None
+
+
+class NotSupportedError(Exception):
+    pass
+
+
 def _running_within_docker() -> bool:
     """
     detects, if module is running within docker and returns the result as bool
@@ -35,20 +53,26 @@ def _running_within_docker() -> bool:
         return False
 
 
-def _check_paths(paths: ty.Dict[str, pathlib.Path]):
+def _check_paths(paths: ty.Dict[str, pathlib.Path], raise_error: bool = True):
     """
-    checks, if paths are existing
+    checks, if main paths are existing along with the manifest.json and input_file_mapping.json
     """
-    for entry in ['app', 'config', 'data']:
-        if not paths.get(entry, pathlib.Path('i_dont_exist')).exists():
-            pass
-            #raise Warning(f"Path to {entry} not found! Check paths!")
-    if not (paths['app'] / 'manifest.json').exists():
-        pass
-        #raise Warning("manifest.json not found!")
-    if not (paths['config'] / 'input_file_mapping.json').exists():
-        pass
-        #raise Warning("input_file_mapping.json not found!")
+    for to_check in ['app', 'config', 'data']:
+        path_entry = paths.get(to_check)
+        if path_entry is None or not path_entry.exists():
+            err_msg = f"Path to {path_entry} not found! Check paths!"
+            if raise_error is True:
+                raise RuntimeError(err_msg)
+            else:
+                logger.warning(err_msg)
+
+    for to_check in [paths['app'] / 'manifest.json', paths['config'] / 'input_file_mapping.json']:
+        if not to_check.exists():
+            err_msg = f"`{to_check}` does not exist! Please check paths and existence!"
+            if raise_error is True:
+                raise FileNotFoundError(err_msg)
+            else:
+                logger.warning(err_msg)
 
 
 def set_paths(app_dir: str = None, data_root: str = None) -> ty.Dict[str, pathlib.Path]:
@@ -68,9 +92,10 @@ def set_paths(app_dir: str = None, data_root: str = None) -> ty.Dict[str, pathli
     data_root: str, optional
       path to root directory of input/output/config/summary
     """
+    global _PATHS
     if _running_within_docker() is True:
         if any([app_dir, data_root, os.environ.get("FG_APP_DIR"), os.environ.get("FG_DATA_ROOT")]):
-            logger.warning("Running within docker - non-default paths may result in errors ")
+            logger.warning("Running within docker - non-default paths may result in errors!")
 
     if app_dir is None:
         app_dir_path = pathlib.Path(os.environ.get("FG_APP_DIR", DEFAULT_APP_DIR)).absolute()
@@ -92,32 +117,24 @@ def set_paths(app_dir: str = None, data_root: str = None) -> ty.Dict[str, pathli
              'output': data_root_path / pathlib.Path('output'),
              'summary': data_root_path / pathlib.Path('summary')}
 
-    # check
+    # check and set
     _check_paths(paths)
-
-    return paths
-
-
-# get current paths
-RESOURCES_PATH = pathlib.Path(__file__).parent
-SCHEMA_DIR = RESOURCES_PATH / 'schemes'
-
-DEFAULT_APP_DIR = '/app'
-DEFAULT_DATA_ROOT = '/fastgenomics'
-
-# init paths
-PATHS = set_paths()
-
-# init parameter cache
-_PARAMETERS = None
+    _PATHS = paths
 
 
+def _get_paths():
+    """
+    safe getter for the runtime paths
 
-class NotSupportedError(Exception):
-    pass
+    if paths are not initialized, it runs ``set_paths(DEFAULT_APP_DIR, DEFAULT_DATA_ROOT)``
+    """
+    global _PATHS
+    if _PATHS is None:
+        _PATHS = set_paths(DEFAULT_APP_DIR, DEFAULT_DATA_ROOT)
+    return _PATHS
 
 
-def assert_manifest_is_valid(config: dict):
+def _assert_manifest_is_valid(config: dict):
     """
     Asserts that the manifest (``manifest.json``) matches our JSON-Schema.
     If not a ``jsonschema.ValidationError`` will be raised.
@@ -137,13 +154,19 @@ def assert_manifest_is_valid(config: dict):
                                f"The value is accessible but beware!")
 
 
-def get_app_manifest() -> dict:
+def _get_app_manifest() -> dict:
     """
     Parses and returns the app manifest.json
 
     Raises a RuntimeError of manifest.json does not exist.
     """
-    manifest_file = PATHS['app'] / 'manifest.json'
+    global _MANIFEST
+
+    # use cache
+    if _MANIFEST is not None:
+        return _MANIFEST
+
+    manifest_file = _get_paths()['app'] / 'manifest.json'
     if not manifest_file.exists():
         err_msg = (f"App manifest {manifest_file} not found! "
                    "Please provide a manifest.json in the application's root-directory.")
@@ -151,35 +174,45 @@ def get_app_manifest() -> dict:
     with open(manifest_file) as f:
         try:
             config = json.load(f)
-            assert_manifest_is_valid(config)
-            return config['FASTGenomicsApplication']
+            _assert_manifest_is_valid(config)
+            # update cache
+            _MANIFEST = config['FASTGenomicsApplication']
         except json.JSONDecodeError:
             err_msg = f"App manifest {manifest_file} not a valid JSON-file - check syntax!"
             raise RuntimeError(err_msg)
 
+    return _MANIFEST
+    
 
 def get_input_path(input_key: str) -> pathlib.Path:
     """
     Gets the location of a input file and returns it as pathlib object.
     Keep in mind that you have to define your input files in your ``manifest.json`` in advance!
     """
+    manifest = _get_app_manifest()['Input']
+
+    if input_key not in manifest:
+        err_msg = f"Key '{input_key}' not defined in manifest.json!"
+        logger.error(err_msg)
+        raise ValueError(err_msg)
+
     # try to get input file mapping from environment
     input_file_mapping = json.loads(os.environ.get('INPUT_FILE_MAPPING', '{}'))
     source_str = "environment 'INPUT_FILE_MAPPING'"
 
     # else use input_file_mapping file
     if not input_file_mapping:
-        with open(PATHS['config'] / 'input_file_mapping.json') as f:
+        with open(_get_paths()['config'] / 'input_file_mapping.json') as f:
             input_file_mapping = json.load(f)
             source_str = "file 'input_file_mapping.json'"
 
     # check for key in mapping
     if input_key not in input_file_mapping:
-        err_msg = f"Key '{input_key}' not defined in {source_str}. Please check your manifest.json and code."
+        err_msg = f"Key '{input_key}' not defined in {source_str}! Please check your manifest.json and code."
         logger.error(err_msg)
         raise ValueError(err_msg)
 
-    input_file = PATHS['data'] / input_file_mapping[input_key]
+    input_file = _get_paths()['data'] / input_file_mapping[input_key]
 
     # check existence
     if not input_file.exists():
@@ -201,7 +234,7 @@ def get_output_path(output_key: str) -> pathlib.Path:
         with my_path_object.open('w') as f_out:
             f_out.write("something")
     """
-    manifest = get_app_manifest()
+    manifest = _get_app_manifest()
 
     # check application type
     if manifest['Type'] != 'Calculation':
@@ -215,7 +248,7 @@ def get_output_path(output_key: str) -> pathlib.Path:
         logger.error(err_msg)
         raise ValueError(err_msg)
 
-    output_file = PATHS['output'] / output_file_mapping[output_key]['FileName']
+    output_file = _get_paths()['output'] / output_file_mapping[output_key]['FileName']
 
     # check for existence
     if output_file.exists():
@@ -230,14 +263,14 @@ def get_summary_path() -> pathlib.Path:
     Gets the location of the summary file and returns it as a pathlib object.
     Please write your summary as CommonMark-compatible Markdown into this file.
     """
-    manifest = get_app_manifest()
+    manifest = _get_app_manifest()
 
     # check application type
     if manifest['Type'] != 'Calculation':
         err_msg = f"File output for '{manifest['Type']}' applications not supported!"
         raise NotSupportedError(err_msg)
 
-    output_file = PATHS['summary'] / 'summary.md'
+    output_file = _get_paths()['summary'] / 'summary.md'
 
     # check for existence
     if output_file.exists():
@@ -260,7 +293,7 @@ def get_parameters() -> dict:
 
 def _load_parameters():
     parameters = _get_default_parameters_from_manifest()
-    parameters_file = PATHS['config'] / 'parameters.json'
+    parameters_file = _get_paths()['config'] / 'parameters.json'
 
     if not parameters_file.exists():
         logger.info(f"No custom parameters {parameters_file} found - using defaults.")
@@ -324,18 +357,17 @@ def _check_all_custom_parameters_are_in_manifest(custom_parameters, parameters):
     extra_custom_keys = custom_parameter_keys.difference(manifest_parameter_keys)
     if len(extra_custom_keys) > 0:
         logger.warning(
-            f"{PARAMETERS_FILE} contains extra keys which are net specified in the manifest, "
-            f"We are ignoring them. Keys {extra_custom_keys}")
+            f"Ignoring parameter {extra_custom_keys}, defined in parameters.json as it is not defined in manifest")
 
 
 def _get_default_parameters_from_manifest():
-    temp = get_app_manifest()['Parameters']
+    temp = _get_app_manifest()['Parameters']
     parameters = {param: value.get('Default') for param, value in temp.items()}
     return parameters
 
 
 def _get_parameter_types_from_manifest():
-    temp = get_app_manifest()['Parameters']
+    temp = _get_app_manifest()['Parameters']
     parameters = {param: value.get('Type') for param, value in temp.items()}
     return parameters
 
