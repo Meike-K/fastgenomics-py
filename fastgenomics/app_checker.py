@@ -30,7 +30,7 @@ def check_app_structure(app_dir: pathlib.Path):
     logger.info(f"Checking manifest.json in {app_dir}")
     assert (app_dir / 'manifest.json').exists(), "manifest.json is missing!"
     manifest = fg_io._get_app_manifest(app_dir)
-    # This is already done in _get_app_manifest, but let’s make sure this is tested
+    # This is already done in get_app_manifest, but let’s make sure this is tested
     fg_io._assert_manifest_is_valid(dict(FASTGenomicsApplication=manifest))
 
     # check directory structure
