@@ -46,8 +46,17 @@
       "CPU"
     ],
     "Input": {
+      "some_input": {
+        "Type": "SomeType",
+        "Usage": "sample input for testing"
+      }
     },
     "Output": {
+      "some_output": {
+        "Type": "SomeType",
+        "Usage": "sample output for testing",
+        "FileName": "some_output.csv"
+      }
     }
   }
 }

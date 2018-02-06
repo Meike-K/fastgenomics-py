@@ -43,34 +43,26 @@ my_output_path = fg_io.get_output_path('my_output_key')
 ...
 ```
 
-# Testing without docker
-If you want to work without docker, your paths will likely not match `/fastgenomics` for data and `/app` for your manifest. You can set two environment variables to ease testing:
+# Testing
+If you want to test file input/output, you have to provide a sample `config/input_file_mapping.json`.
 
-- `FG_APP_DIR`: This path should contain `manifest.json`, normally this is `/app`.
+## Testing without docker
+If you want to work without docker, your paths will likely not match our default
 
-    ```
-    $FG_APP_DIR/manifest.json
-    ```
+ - `/app`  
+   path to your app, must contain `manifest.json`
+ - `/fastgenomics`
+   path to sample data. Should contain `config/`, `data/`, `output/`, `summary/`.  
 
-- `FG_DATA_ROOT`: This path should contain you test data and output directories - normally, this is `/fastgenomics`.
-
-    ```
-    $FG_DATA_ROOT/data/...
-    $FG_DATA_ROOT/config/parameters.json
-    $FG_DATA_ROOT/output/
-    $FG_DATA_ROOT/summary/
-    ```
-
-e.g.
+However, you can set them by providing environment variables `FG_APP_DIR` and `FG_DATA_ROOT`
+or by setting paths within your code: 
 
 ```python
-import os
-
-# set paths for local development *before* importing fastgenomics 
-os.environ["FG_APP_DIR"] = "/abs_path/to/my_app/"
-os.environ["FG_DATA_ROOT"] = "/abs_path/to/my/sample_data"
-
 from fastgenomics import io as fg_io
+
+fg_io.set_paths("path_to/my_app", "path_to_my/sample_data")
 ```
+Keep in mind to reset the paths to default (just by not setting paths), when transforming your app
+into an docker-image!
 
 For more details see our [Hello Genomics Python App](https://github.com/fastgenomics/hello_genomics_calc_py36).
