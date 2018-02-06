@@ -5,7 +5,7 @@ import pip
 from setuptools import setup
 from distutils.version import LooseVersion
 
-VERSION = '0.4.1'  # scheme: breaking major, non-breaking feature, fix
+VERSION = '0.5.0'  # scheme: breaking major, non-breaking feature, fix
 
 
 # check python and pip versions

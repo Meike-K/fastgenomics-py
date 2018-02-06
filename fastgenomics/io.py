@@ -182,7 +182,7 @@ def _get_app_manifest() -> dict:
             raise RuntimeError(err_msg)
 
     return _MANIFEST
-    
+
 
 def get_input_path(input_key: str) -> pathlib.Path:
     """
