@@ -41,6 +41,10 @@ def fg_env(monkeypatch):
     """sets app_dir and data_root by env-variables"""
     monkeypatch.setenv('FG_APP_DIR', str(APP_DIR))
     monkeypatch.setenv('FG_DATA_ROOT', str(DATA_ROOT))
+    monkeypatch.setattr("fastgenomics.common._PATHS", {})
+    monkeypatch.setattr("fastgenomics.common._PARAMETERS", {})
+    monkeypatch.setattr("fastgenomics.common._MANIFEST", {})
+    monkeypatch.setattr("fastgenomics.common._INPUT_FILE_MAPPING", {})
 
 
 @pytest.fixture
