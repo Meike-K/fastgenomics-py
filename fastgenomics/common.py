@@ -164,7 +164,7 @@ def get_paths() -> PathsDict:
     if paths are not initialized, it runs ``set_paths(DEFAULT_APP_DIR, DEFAULT_DATA_ROOT)``
     """
     if not _PATHS:
-        set_paths(DEFAULT_APP_DIR, DEFAULT_DATA_ROOT)
+        set_paths()
     return _PATHS
 
 

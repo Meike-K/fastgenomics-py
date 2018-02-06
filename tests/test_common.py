@@ -11,6 +11,10 @@ def test_custom_init_paths(app_dir, data_root):
     common.get_paths()
 
 
+def test_paths_from_env(fg_env):
+    common.get_paths()
+
+
 def test_cannot_init_nonexisting_paths():
     with pytest.raises(RuntimeError):
         common.set_paths("i_don't_exist", "me_neither")
