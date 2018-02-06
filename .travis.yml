@@ -3,7 +3,8 @@ python:
   - "3.6"
   - "nightly"
 install:
-  - pip install pytest
+  - pip install pytest pytest-cov codecov
   - pip install .
 script:
-  - pytest
+  - pytest --cov=./
+  - codecov
