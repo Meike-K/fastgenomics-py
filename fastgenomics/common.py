@@ -145,7 +145,7 @@ def get_input_file_mapping() -> FileMapping:
         if not ifm_path.exists():
             raise FileNotFoundError("Input file mapping %s not found!", ifm_path)
 
-        with open(get_paths()['config'] / 'input_file_mapping.json') as f:
+        with open(get_paths()['config'] / 'input_file_mapping.json', encoding='utf-8') as f:
             input_file_mapping = json.load(f)
             source_str = ifm_path.name
 
@@ -173,7 +173,7 @@ def assert_manifest_is_valid(config: dict):
     Asserts that the manifest (``manifest.json``) matches our JSON-Schema.
     If not a ``jsonschema.ValidationError`` will be raised.
     """
-    with open(SCHEMA_DIR / 'manifest_schema.json') as f:
+    with open(SCHEMA_DIR / 'manifest_schema.json', encoding='utf-8') as f:
         schema = json.load(f)
     jsonschema.validate(config, schema)
 
@@ -205,7 +205,7 @@ def get_app_manifest() -> dict:
         err_msg = (f"App manifest {manifest_file} not found! "
                    "Please provide a manifest.json in the application's root-directory.")
         raise RuntimeError(err_msg)
-    with open(manifest_file) as f:
+    with open(manifest_file, encoding='utf-8') as f:
         try:
             config = json.load(f)
             assert_manifest_is_valid(config)

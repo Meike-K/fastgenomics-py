@@ -12,27 +12,27 @@ def test_can_read_input_file(local):
 
 def test_cannot_read_undefined_input(local):
     with pytest.raises(ValueError):
-        fg_io.get_input_path("i_dont_exist")
+        fg_io.get_input_path("i_don't_exist")
 
 
 def test_can_write_summary(local, clear_output):
     sum_file = fg_io.get_summary_path()
-    with sum_file.open('w') as sum:
-        sum.write('test')
+    with sum_file.open('w', encoding='utf-8') as out:
+        out.write('test')
     assert sum_file.exists()
 
 
 def test_can_write_output(local, clear_output):
         out_path = fg_io.get_output_path("some_output")
         assert out_path.name == 'some_output.csv'
-        with out_path.open('w') as out:
+        with out_path.open('w', encoding='utf-8') as out:
             out.write('test')
         assert out_path.exists()
 
 
 def test_cannot_write_undefined_output(local):
     with pytest.raises(ValueError):
-        fg_io.get_output_path("i_dont_exist")
+        fg_io.get_output_path("i_don't_exist")
 
 
 # test things, imported from fastgenomics.common, are available

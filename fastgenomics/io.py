@@ -59,7 +59,7 @@ def get_output_path(output_key: str) -> pathlib.Path:
     You can use this path-object to write your output as follows::
 
         my_path_object = get_output_path('my_output_key')
-        with my_path_object.open('w') as f_out:
+        with my_path_object.open('w', encoding='utf-8') as f_out:
             f_out.write("something")
     """
     manifest = common.get_app_manifest()
