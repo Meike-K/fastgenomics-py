@@ -29,16 +29,16 @@ def check_app_structure(app_dir: pathlib.Path):
     # check manifest.json
     logger.info(f"Checking manifest.json in {app_dir}")
     assert (app_dir / 'manifest.json').exists(), "manifest.json is missing!"
-    manifest = fg_io._get_app_manifest(app_dir)
+    manifest = fg_io.common.get_app_manifest()
     # This is already done in get_app_manifest, but let’s make sure this is tested
-    fg_io._assert_manifest_is_valid(dict(FASTGenomicsApplication=manifest))
+    fg_io.common.assert_manifest_is_valid(dict(FASTGenomicsApplication=manifest))
 
     # check directory structure
     logger.info(f"Checking app-structure in {app_dir}")
     assert (app_dir / 'Dockerfile').exists(), "Dockerfile is missing!"
     assert (app_dir / 'README.md').exists(), "README.md is missing!"
     if not (app_dir / 'LICENSE').exists():
-        logger.warning("'LICENSE' file found - please provide LICENSE text "
+        logger.warning("No 'LICENSE' file found - please provide LICENSE text "
                        "including all third-party libraries!")
     if not (app_dir / 'requirements.txt').exists():
         logger.warning("No requirements.txt found - please provide list of requirements!")
@@ -66,11 +66,11 @@ def create_docker_compose(app_dir: pathlib.Path, app_name: pathlib.Path, sample_
     docker_compose_file = app_dir / 'docker-compose.yml'
 
     if docker_compose_file.exists():
-        logger.warning(f"{docker_compose_file.name} already existing! Aborting.")
+        warn(f"{docker_compose_file.name} already existing! Aborting.")
         return
 
     # get app type
-    manifest = fg_io._get_app_manifest(app_dir)
+    manifest = fg_io.common.get_app_manifest()
     app_type = manifest['Type']
 
     logger.info("Loading docker-compose.yml template")
@@ -100,7 +100,7 @@ def create_file_mapping(app_dir: pathlib.Path, sample_dir: pathlib.Path):
     file_mapping_file.parent.mkdir(parents=True, exist_ok=True)
 
     # create file_mappings
-    manifest = fg_io._get_app_manifest(app_dir)
+    manifest = fg_io.common.get_app_manifest()
     input_keys = manifest['Input'].keys()
     file_mapping = {key: sample_output_dir / 'fix_me.txt' for key in input_keys}
 
