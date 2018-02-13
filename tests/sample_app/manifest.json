@@ -40,6 +40,18 @@
         "Type": "dict",
         "Default": {"foo": 42, "bar": "answer to everything"},
         "Description": "Dict of key-value-pairs"
+      },
+      "OptionalIntValueConcrete": {
+        "Type": "integer",
+        "Optional": true,
+        "Default": 4,
+        "Description": "Either an int or not. default yea"
+      },
+      "OptionalIntValueNull": {
+        "Type": "integer",
+        "Optional": true,
+        "Default": null,
+        "Description": "Either an int or not. default nope"
       }
     },
     "Demands": [

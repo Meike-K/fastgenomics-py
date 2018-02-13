@@ -239,7 +239,8 @@ def assert_manifest_is_valid(config: dict):
         for name, properties in parameters.items():
             expected_type = properties["Type"]
             default_value = properties["Default"]
-            if not value_is_of_type(expected_type, default_value):
+            optional = properties.get("Optional", False)
+            if not value_is_of_type(expected_type, default_value, optional):
                 logger.warning(f"The default parameter {name} has a different value than expected. "
                                f"It should be {expected_type} but is {type(default_value)}. "
                                f"The value is accessible but beware!")
@@ -299,13 +300,10 @@ def get_parameter(param_key: str):
     """Returns the specific parameter 'param_key' from the parameters"""
     parameters = get_parameters()
 
-    # get value or raise exception
-    parameter = parameters.get(param_key)
-
-    # check for existence and return
-    if parameter is None:
+    # check for existence and return or raise exception
+    if param_key not in parameters:
         raise ValueError(f"Parameter {param_key} not defined in manifest.json!")
-    return parameter
+    return parameters[param_key]
 
 
 def get_default_parameters_from_manifest() -> Parameters:
@@ -336,14 +334,13 @@ def load_runtime_parameters() -> Parameters:
     return runtime_parameters
 
 
-def get_parameter_types_from_manifest() -> ty.Dict[str, str]:
+def get_parameter_types_from_manifest() -> ty.Dict[str, ty.Tuple[ty.Optional[str], bool]]:
     """returns the types of parameters defined in the manifest.json"""
     temp = get_app_manifest()['Parameters']
-    parameters = {param: value.get('Type') for param, value in temp.items()}
-    return parameters
+    return {param: (value.get('Type'), value.get('Optional', False)) for param, value in temp.items()}
 
 
-def value_is_of_type(expected_type: str, value: ty.Any) -> bool:
+def value_is_of_type(expected_type: str, value: ty.Any, optional: bool) -> bool:
     """tests, of a value is an instance of a given an expected type"""
     type_mapping = {
         'float': (int, float),
@@ -357,7 +354,7 @@ def value_is_of_type(expected_type: str, value: ty.Any) -> bool:
     if mapped_type is None:
         raise ValueError(f"Unknown type to check: {expected_type}")
 
-    return isinstance(value, mapped_type)
+    return isinstance(value, mapped_type) or (optional and value is None)
 
 
 def check_parameter_types(parameters: Parameters):
@@ -365,9 +362,9 @@ def check_parameter_types(parameters: Parameters):
     parameter_types = get_parameter_types_from_manifest()
 
     for param_name, param_value in parameters.items():
-        expected_type = parameter_types[param_name]
+        expected_type, optional = parameter_types[param_name]
         # parameter types see manifest_schema.json
-        if not value_is_of_type(expected_type, param_value):
+        if not value_is_of_type(expected_type, param_value, optional):
             # we do not throw an exception because having multi-value parameters is
             #  common in some libraries, e.g. specify "red" or 24342
             logger.warning(f"The parameter {param_name} has a different type than expected. "

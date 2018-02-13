@@ -63,9 +63,19 @@ def test_parameters(local):
     assert "DictValue" in parameters
     assert parameters["DictValue"] == {"foo": 42, "bar": "answer to everything"}
 
+    assert "OptionalIntValueConcrete" in parameters
+    assert parameters["OptionalIntValueConcrete"] == 4
+
+    assert "OptionalIntValueNull" in parameters
+    assert parameters["OptionalIntValueNull"] is None
+
 
 def test_can_get_specific_parameter(local):
     assert _common.get_parameter("IntValue") == 150
+
+
+def test_can_get_null_parameter(local):
+    assert _common.get_parameter("OptionalIntValueNull") is None
 
 
 def test_can_have_different_type(local, monkeypatch):

@@ -39,6 +39,10 @@
           "description": "Type of the value of the parameter",
           "enum": ["string", "integer", "float", "bool", "list", "dict"]
         },
+        "Optional": {
+          "description": "Accept null as parameter value in addition to values of the given type?",
+          "type": "boolean"
+        },
         "Description": {
           "description": "Description of the parameter",
           "type": "string"
