@@ -1,6 +1,10 @@
 import pytest
 
+from io import StringIO
+from logging import StreamHandler, WARNING, Logger
+from contextlib import contextmanager
 from pathlib import Path
+from typing import Callable, ContextManager
 
 HERE = Path(__file__).parent
 APP_DIR = HERE / 'sample_app'
@@ -15,6 +19,18 @@ def app_dir():
 @pytest.fixture
 def data_root():
     return DATA_ROOT
+
+
+@pytest.fixture
+def catch_log_warnings() -> Callable[[Logger], ContextManager[StreamHandler]]:
+    @contextmanager
+    def catcher(logger: Logger):
+        handler = StreamHandler(StringIO())
+        handler.setLevel(WARNING)
+        logger.addHandler(handler)
+        yield handler
+
+    return catcher
 
 
 def get_local_paths():
