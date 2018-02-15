@@ -10,9 +10,8 @@ import jinja2
 from fastgenomics import io as fg_io
 
 from logging import getLogger
-from pkg_resources import get_distribution
 
-__version__ = get_distribution('fastgenomics')
+__version__ = fg_io.__version__
 
 # set paths
 RESOURCES_PATH = pathlib.Path(__file__).parent
@@ -66,7 +65,7 @@ def create_docker_compose(app_dir: pathlib.Path, app_name: pathlib.Path, sample_
     docker_compose_file = app_dir / 'docker-compose.yml'
 
     if docker_compose_file.exists():
-        warn(f"{docker_compose_file.name} already existing! Aborting.")
+        logger.warning(f"{docker_compose_file.name} already existing! Aborting.")
         return
 
     # get app type
@@ -84,7 +83,7 @@ def create_docker_compose(app_dir: pathlib.Path, app_name: pathlib.Path, sample_
         f_out.write(temp)
 
 
-def create_file_mapping(app_dir: pathlib.Path, sample_dir: pathlib.Path):
+def create_file_mapping(sample_dir: pathlib.Path):
     """
     creates a base input_file_mapping.json
     """
