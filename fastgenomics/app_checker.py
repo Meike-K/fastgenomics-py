@@ -25,36 +25,44 @@ logger = getLogger('fastgenomics.testing')
 
 def check_app_structure(app_dir: pathlib.Path):
     """checks the structure of your app - only checks for mandatory files and directories"""
+
+    # check app structure
+    logger.info(f"Checking app-structure in {app_dir}")
+    to_check = ['manifest.json', 'README.md', 'LICENSE', 'Dockerfile', 'requirements.txt']
+    warn_only = ['requirements.txt']
+
+    for entry in to_check:
+        entry_path = app_dir / entry
+        if not entry_path.exists():
+            err_msg = f"{entry_path} is missing!"
+            if entry in warn_only:
+                logger.warning(err_msg)
+            else:
+                logger.error(err_msg)
+
     # check manifest.json
     logger.info(f"Checking manifest.json in {app_dir}")
-    assert (app_dir / 'manifest.json').exists(), "manifest.json is missing!"
     manifest = fg_io.common.get_app_manifest()
     # This is already done in get_app_manifest, but let’s make sure this is tested
     fg_io.common.assert_manifest_is_valid(dict(FASTGenomicsApplication=manifest))
 
-    # check directory structure
-    logger.info(f"Checking app-structure in {app_dir}")
-    assert (app_dir / 'Dockerfile').exists(), "Dockerfile is missing!"
-    assert (app_dir / 'README.md').exists(), "README.md is missing!"
-    if not (app_dir / 'LICENSE').exists():
-        logger.warning("No 'LICENSE' file found - please provide LICENSE text "
-                       "including all third-party libraries!")
-    if not (app_dir / 'requirements.txt').exists():
-        logger.warning("No requirements.txt found - please provide list of requirements!")
-
-    logger.info(f"Checking sample_data in {app_dir}")
-    # define valid directories
-    valid_sample_data_dirs = ['data', 'config']
-    if manifest['Type'] == 'Calculation':
-        valid_sample_data_dirs += ['output', 'summary']
-
-    # check for sample_data
+    # checking for sample_data
+    logger.info(f"Checking for sample_data in {app_dir}")
     sample_dir = app_dir / 'sample_data'
+
+    valid_sample_data_sub_dirs = ['data', 'config']
+    if manifest['Type'] == 'Calculation':
+        valid_sample_data_sub_dirs += ['output', 'summary']
+
     if not sample_dir.exists():
         logger.warning("No sample_data found - please provide sample data!")
     else:
-        for sub_dir in valid_sample_data_dirs:
+        for sub_dir in valid_sample_data_sub_dirs:
             assert (sample_dir / sub_dir).exists(), f"sample_data subdirectory {sub_dir} is missing!"
+
+    # check input_file_mapping
+    ifm = fg_io.common.get_input_file_mapping()
+    fg_io.common.check_input_file_mapping(ifm)
 
 
 def create_docker_compose(app_dir: pathlib.Path, app_name: pathlib.Path, sample_dir: pathlib.Path,
@@ -81,6 +89,13 @@ def create_docker_compose(app_dir: pathlib.Path, app_name: pathlib.Path, sample_
         temp = template.render(app_name=app_name, sample_dir=sample_dir.relative_to(app_dir),
                                docker_registry=docker_registry, app_type=app_type)
         f_out.write(temp)
+
+
+def check_input_file_mapping(app_dir: pathlib.Path):
+    """checks the input_file_mapping"""
+    sample_dir = app_dir / 'sample_data'
+    fg_io.set_paths(app_dir, sample_dir)
+    fg_io.common.get_input_file_mapping(check_mapping=True)
 
 
 def create_file_mapping(sample_dir: pathlib.Path):
