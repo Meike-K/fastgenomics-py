@@ -60,9 +60,8 @@ def check_app_structure(app_dir: pathlib.Path):
         for sub_dir in valid_sample_data_sub_dirs:
             assert (sample_dir / sub_dir).exists(), f"sample_data subdirectory {sub_dir} is missing!"
 
-    # check input_file_mapping
-    ifm = fg_io.common.get_input_file_mapping()
-    fg_io.common.check_input_file_mapping(ifm)
+    # get and check input_file_mapping
+    fg_io.common.get_input_file_mapping(check_mapping=True)
 
 
 def create_docker_compose(app_dir: pathlib.Path, app_name: pathlib.Path, sample_dir: pathlib.Path,

@@ -143,9 +143,9 @@ def check_input_file_mapping(input_file_mapping: FileMapping):
 
     # check keys
     if not_in_manifest:
-        logger.info(f"Ignoring Keys defined in input_file_mapping: {not_in_manifest}")
+        logger.warning(f"Ignoring Keys defined in input_file_mapping: {not_in_manifest}")
 
-    if optional:
+    if optional:   # not implemented yet
         logger.warning(f"Non-optional keys not defined in input_file_mapping: {missing}")
 
     if missing:
@@ -166,13 +166,8 @@ def str_to_path_file_mapping(relative_mapping: ty.Dict[str, str]) -> FileMapping
     return absolute_mapping
 
 
-def get_input_file_mapping(check_mapping: bool = True) -> FileMapping:
-    """returns the input_file_mapping either from environment `INPUT_FILE_MAPPING` or from config file"""
-    global _INPUT_FILE_MAPPING
-
-    if _INPUT_FILE_MAPPING:
-        return _INPUT_FILE_MAPPING
-
+def load_input_file_mapping() -> ty.Dict[str, str]:
+    """helper function loading the input_file_mapping either from environment or from file"""
     # try to get input file mapping from environment
     empty_str = '{}'
     ifm_str = os.environ.get('INPUT_FILE_MAPPING', empty_str)
@@ -182,7 +177,7 @@ def get_input_file_mapping(check_mapping: bool = True) -> FileMapping:
     if ifm_str == empty_str:
         ifm_path = get_paths()['config'] / 'input_file_mapping.json'
         if not ifm_path.exists():
-            raise FileNotFoundError("Input file mapping %s not found!", ifm_path)
+            raise FileNotFoundError(f"Input file mapping {ifm_path} not found!")
 
         with open(get_paths()['config'] / 'input_file_mapping.json', encoding='utf-8') as f:
             ifm_str = f.read()
@@ -193,7 +188,19 @@ def get_input_file_mapping(check_mapping: bool = True) -> FileMapping:
     try:
         ifm_dict = json.loads(ifm_str)
     except json.JSONDecodeError:
-        raise RuntimeError(f"input_file_mapping, provided by {source_str}, is not valid JSON!")
+        raise RuntimeError(f"{source_str} is not valid JSON!")
+    return ifm_dict
+
+
+def get_input_file_mapping(check_mapping: bool = True) -> FileMapping:
+    """returns the input_file_mapping either from environment `INPUT_FILE_MAPPING` or from config file"""
+    global _INPUT_FILE_MAPPING
+
+    if _INPUT_FILE_MAPPING:
+        return _INPUT_FILE_MAPPING
+
+    # load mapping
+    ifm_dict = load_input_file_mapping()
 
     # convert into paths
     input_file_mapping = str_to_path_file_mapping(ifm_dict)
