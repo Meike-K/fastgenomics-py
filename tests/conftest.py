@@ -44,12 +44,12 @@ def get_local_paths():
 @pytest.fixture
 def local(monkeypatch):
     """patches the paths for local testing"""
-    monkeypatch.setattr("fastgenomics.common.DEFAULT_APP_DIR", str(APP_DIR))
-    monkeypatch.setattr("fastgenomics.common.DEFAULT_DATA_ROOT", str(DATA_ROOT))
-    monkeypatch.setattr("fastgenomics.common._PATHS", {})
-    monkeypatch.setattr("fastgenomics.common._PARAMETERS", {})
-    monkeypatch.setattr("fastgenomics.common._MANIFEST", {})
-    monkeypatch.setattr("fastgenomics.common._INPUT_FILE_MAPPING", {})
+    monkeypatch.setattr("fastgenomics._common.DEFAULT_APP_DIR", str(APP_DIR))
+    monkeypatch.setattr("fastgenomics._common.DEFAULT_DATA_ROOT", str(DATA_ROOT))
+    monkeypatch.setattr("fastgenomics._common._PATHS", {})
+    monkeypatch.setattr("fastgenomics._common._PARAMETERS", {})
+    monkeypatch.setattr("fastgenomics._common._MANIFEST", {})
+    monkeypatch.setattr("fastgenomics._common._INPUT_FILE_MAPPING", {})
 
 
 @pytest.fixture
@@ -57,10 +57,10 @@ def fg_env(monkeypatch):
     """sets app_dir and data_root by env-variables"""
     monkeypatch.setenv('FG_APP_DIR', str(APP_DIR))
     monkeypatch.setenv('FG_DATA_ROOT', str(DATA_ROOT))
-    monkeypatch.setattr("fastgenomics.common._PATHS", {})
-    monkeypatch.setattr("fastgenomics.common._PARAMETERS", {})
-    monkeypatch.setattr("fastgenomics.common._MANIFEST", {})
-    monkeypatch.setattr("fastgenomics.common._INPUT_FILE_MAPPING", {})
+    monkeypatch.setattr("fastgenomics._common._PATHS", {})
+    monkeypatch.setattr("fastgenomics._common._PARAMETERS", {})
+    monkeypatch.setattr("fastgenomics._common._MANIFEST", {})
+    monkeypatch.setattr("fastgenomics._common._INPUT_FILE_MAPPING", {})
 
 
 @pytest.fixture
@@ -76,4 +76,4 @@ def clear_output():
 @pytest.fixture
 def fake_docker(monkeypatch):
     """fakes the docker-environment by overriding the running_within_docker-method returning always true"""
-    monkeypatch.setattr("fastgenomics.common.running_within_docker", lambda: True)
+    monkeypatch.setattr("fastgenomics._common.running_within_docker", lambda: True)
