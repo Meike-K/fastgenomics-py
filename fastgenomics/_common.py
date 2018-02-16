@@ -128,32 +128,89 @@ def set_paths(app_dir: str = None, data_root: str = None):
     _PATHS = paths
 
 
-def get_input_file_mapping() -> FileMapping:
+def check_input_file_mapping(input_file_mapping: FileMapping):
+    """checks the keys in input_file_mapping and existence of the files
+
+    raises a KeyError on missing Key and FileNotFoundError on missing file
+    """
+    manifest = get_app_manifest()['Input']
+
+    not_in_manifest = set(input_file_mapping.keys()) - set(manifest.keys())
+    not_in_ifm = set(manifest.keys()) - set(input_file_mapping.keys())
+
+    optional = set()  # not implemented yet
+    missing = not_in_ifm - optional
+
+    # check keys
+    if not_in_manifest:
+        logger.warning(f"Ignoring Keys defined in input_file_mapping: {not_in_manifest}")
+
+    if optional:   # not implemented yet
+        logger.warning(f"Non-optional keys not defined in input_file_mapping: {missing}")
+
+    if missing:
+        raise KeyError(f"Non-optional keys not defined in input_file_mapping: {missing}")
+
+    # check for existence
+    for entry in input_file_mapping.values():
+        if not entry.exists():
+            raise FileNotFoundError(f"{entry}, defined in input_file_mapping, not found!")
+
+
+def str_to_path_file_mapping(relative_mapping: ty.Dict[str, str]) -> FileMapping:
+    """maps the relative string paths given in input_file_mapping to absolute paths"""
+    data_path = get_paths()['data']
+
+    absolute_mapping = {key: data_path / mapped_file
+                        for key, mapped_file in relative_mapping.items()}
+    return absolute_mapping
+
+
+def load_input_file_mapping() -> ty.Dict[str, str]:
+    """helper function loading the input_file_mapping either from environment or from file"""
+    # try to get input file mapping from environment
+    empty_str = '{}'
+    ifm_str = os.environ.get('INPUT_FILE_MAPPING', empty_str)
+    source_str = "`INPUT_FILE_MAPPING` environment"
+
+    # else use input_file_mapping file
+    if ifm_str == empty_str:
+        ifm_path = get_paths()['config'] / 'input_file_mapping.json'
+        if not ifm_path.exists():
+            raise FileNotFoundError(f"Input file mapping {ifm_path} not found!")
+
+        with open(get_paths()['config'] / 'input_file_mapping.json', encoding='utf-8') as f:
+            ifm_str = f.read()
+            source_str = ifm_path.name
+    logger.info(f"Input file mapping loaded from {source_str}.")
+
+    # decode json:
+    try:
+        ifm_dict = json.loads(ifm_str)
+    except json.JSONDecodeError:
+        raise RuntimeError(f"{source_str} is not valid JSON!")
+    return ifm_dict
+
+
+def get_input_file_mapping(check_mapping: bool = True) -> FileMapping:
     """returns the input_file_mapping either from environment `INPUT_FILE_MAPPING` or from config file"""
     global _INPUT_FILE_MAPPING
 
     if _INPUT_FILE_MAPPING:
         return _INPUT_FILE_MAPPING
 
-    # try to get input file mapping from environment
-    input_file_mapping = json.loads(os.environ.get('INPUT_FILE_MAPPING', '{}'))
-    source_str = "`INPUT_FILE_MAPPING` environment"
+    # load mapping
+    ifm_dict = load_input_file_mapping()
 
-    # else use input_file_mapping file
-    if not input_file_mapping:
-        ifm_path = get_paths()['config'] / 'input_file_mapping.json'
-        if not ifm_path.exists():
-            raise FileNotFoundError("Input file mapping %s not found!", ifm_path)
+    # convert into paths
+    input_file_mapping = str_to_path_file_mapping(ifm_dict)
 
-        with open(get_paths()['config'] / 'input_file_mapping.json', encoding='utf-8') as f:
-            input_file_mapping = json.load(f)
-            source_str = ifm_path.name
+    # check existence
+    if check_mapping:
+        check_input_file_mapping(input_file_mapping)
 
-    logger.info(f"Input file mapping loaded from {source_str}.")
-
-    # convert into paths and update cache
-    _INPUT_FILE_MAPPING = {key: get_paths()['data'] / mapped_file
-                           for key, mapped_file in input_file_mapping.items()}
+    # update cache and return
+    _INPUT_FILE_MAPPING = input_file_mapping
     return _INPUT_FILE_MAPPING
 
 

@@ -10,15 +10,15 @@ You can set them by environment variables or just call ``fg_io.set_paths(path_to
 """
 import pathlib
 from logging import getLogger
-from . import common
+from . import _common
 
 # imported for interface
 # noinspection PyUnresolvedReferences
-from .common import set_paths, get_parameters, get_parameter
+from ._common import set_paths, get_parameters, get_parameter
 
 
 logger = getLogger('fastgenomics.io')
-__version__ = common.__version__
+__version__ = _common.__version__
 
 
 def get_input_path(input_key: str) -> pathlib.Path:
@@ -26,8 +26,8 @@ def get_input_path(input_key: str) -> pathlib.Path:
     Gets the location of a input file and returns it as pathlib object.
     Keep in mind that you have to define your input files in your ``manifest.json`` in advance!
     """
-    manifest = common.get_app_manifest()['Input']
-    input_file_mapping = common.get_input_file_mapping()
+    manifest = _common.get_app_manifest()['Input']
+    input_file_mapping = _common.get_input_file_mapping()
 
     # check for key in manifest
     if input_key not in manifest:
@@ -62,12 +62,12 @@ def get_output_path(output_key: str) -> pathlib.Path:
         with my_path_object.open('w', encoding='utf-8') as f_out:
             f_out.write("something")
     """
-    manifest = common.get_app_manifest()
+    manifest = _common.get_app_manifest()
 
     # check application type
     if manifest['Type'] != 'Calculation':
         err_msg = f"File output for '{manifest['Type']}' applications not supported!"
-        raise common.NotSupportedError(err_msg)
+        raise _common.NotSupportedError(err_msg)
 
     # get output_file_mapping
     output_file_mapping = manifest['Output']
@@ -76,7 +76,7 @@ def get_output_path(output_key: str) -> pathlib.Path:
         logger.error(err_msg)
         raise ValueError(err_msg)
 
-    output_file = common.get_paths()['output'] / output_file_mapping[output_key]['FileName']
+    output_file = _common.get_paths()['output'] / output_file_mapping[output_key]['FileName']
 
     # check for existence
     if output_file.exists():
@@ -91,14 +91,14 @@ def get_summary_path() -> pathlib.Path:
     Gets the location of the summary file and returns it as a pathlib object.
     Please write your summary as CommonMark-compatible Markdown into this file.
     """
-    manifest = common.get_app_manifest()
+    manifest = _common.get_app_manifest()
 
     # check application type
     if manifest['Type'] != 'Calculation':
         err_msg = f"File output for '{manifest['Type']}' applications not supported!"
-        raise common.NotSupportedError(err_msg)
+        raise _common.NotSupportedError(err_msg)
 
-    output_file = common.get_paths()['summary'] / 'summary.md'
+    output_file = _common.get_paths()['summary'] / 'summary.md'
 
     # check for existence
     if output_file.exists():
