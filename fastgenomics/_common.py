@@ -15,13 +15,11 @@ import json
 import jsonschema
 import typing as ty
 import pkg_resources
+import re
 
 from logging import getLogger
 
 logger = getLogger('fastgenomics.common')
-
-# get / set version
-VERSION = __version__ = pkg_resources.get_distribution('fastgenomics')
 
 # get package paths
 RESOURCES_PATH = pathlib.Path(__file__).parent
@@ -30,6 +28,13 @@ SCHEMA_DIR = RESOURCES_PATH / 'schemes'
 # set default paths
 DEFAULT_APP_DIR = '/app'
 DEFAULT_DATA_ROOT = '/fastgenomics'
+
+# get / set version
+try:
+    with open(RESOURCES_PATH.parent / 'setup.py') as setup_f:
+        VERSION = __version__ = re.search(r"VERSION = '([\d.]+)'", setup_f.read())[1]
+except IOError:
+    VERSION = __version__ = pkg_resources.get_distribution('fastgenomics')
 
 # init cache
 _PATHS = {}
