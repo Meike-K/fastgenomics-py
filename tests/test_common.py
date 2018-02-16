@@ -69,6 +69,9 @@ def test_parameters(local):
     assert "OptionalIntValueNull" in parameters
     assert parameters["OptionalIntValueNull"] is None
 
+    assert "EnumValue" in parameters
+    assert parameters["EnumValue"] == "X"
+
 
 def test_can_get_specific_parameter(local):
     assert _common.get_parameter("IntValue") == 150

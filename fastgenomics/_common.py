@@ -238,12 +238,10 @@ def assert_manifest_is_valid(config: dict):
     if parameters is not None:
         for name, properties in parameters.items():
             expected_type = properties["Type"]
+            enum = properties.get("Enum")
             default_value = properties["Default"]
             optional = properties.get("Optional", False)
-            if not value_is_of_type(expected_type, default_value, optional):
-                logger.warning(f"The default parameter {name} has a different value than expected. "
-                               f"It should be {expected_type} but is {type(default_value)}. "
-                               f"The value is accessible but beware!")
+            warn_if_not_of_type(name, expected_type, enum, default_value, optional, is_default=True)
 
 
 def get_app_manifest() -> dict:
@@ -334,13 +332,13 @@ def load_runtime_parameters() -> Parameters:
     return runtime_parameters
 
 
-def get_parameter_types_from_manifest() -> ty.Dict[str, ty.Tuple[ty.Optional[str], bool]]:
+def get_parameter_types_from_manifest() -> ty.Dict[str, ty.Tuple[ty.Optional[str], ty.Optional[str], bool]]:
     """returns the types of parameters defined in the manifest.json"""
     temp = get_app_manifest()['Parameters']
-    return {param: (value.get('Type'), value.get('Optional', False)) for param, value in temp.items()}
+    return {param: (value['Type'], value.get('Enum'), value.get('Optional', False)) for param, value in temp.items()}
 
 
-def value_is_of_type(expected_type: str, value: ty.Any, optional: bool) -> bool:
+def value_is_of_type(expected_type: str, enum: ty.Optional[list], value: ty.Any, optional: bool) -> bool:
     """tests, of a value is an instance of a given an expected type"""
     type_mapping = {
         'float': (int, float),
@@ -349,12 +347,19 @@ def value_is_of_type(expected_type: str, value: ty.Any, optional: bool) -> bool:
         'list': list,
         'dict': dict,
         'string': str,
+        'enum': object,
     }
     mapped_type = type_mapping.get(expected_type)
     if mapped_type is None:
         raise ValueError(f"Unknown type to check: {expected_type}")
 
-    return isinstance(value, mapped_type) or (optional and value is None)
+    if optional and value is None:
+        return True
+    if enum is not None:
+        if expected_type != 'enum':
+            raise ValueError(f"Enum provided but type is {expected_type}")
+        return value in enum
+    return isinstance(value, mapped_type)
 
 
 def check_parameter_types(parameters: Parameters):
@@ -362,14 +367,11 @@ def check_parameter_types(parameters: Parameters):
     parameter_types = get_parameter_types_from_manifest()
 
     for param_name, param_value in parameters.items():
-        expected_type, optional = parameter_types[param_name]
+        expected_type, enum, optional = parameter_types[param_name]
         # parameter types see manifest_schema.json
-        if not value_is_of_type(expected_type, param_value, optional):
-            # we do not throw an exception because having multi-value parameters is
-            #  common in some libraries, e.g. specify "red" or 24342
-            logger.warning(f"The parameter {param_name} has a different type than expected. "
-                           f"It should be {expected_type} but is {type(param_value)}. "
-                           f"The value is accessible but beware!")
+        # we do not throw an exception because having multi-value parameters is
+        #  common in some libraries, e.g. specify "red" or 24342
+        warn_if_not_of_type(param_name, expected_type, enum, param_value, optional)
 
 
 def check_all_runtime_parameters_are_in_manifest(runtime_parameters: Parameters):
@@ -381,3 +383,15 @@ def check_all_runtime_parameters_are_in_manifest(runtime_parameters: Parameters)
     if len(additional_runtime_params) > 0:
         logger.warning(f"Ignoring parameter {additional_runtime_params} "
                        f"defined in parameters.json, as it is not defined in manifest.json")
+
+
+def warn_if_not_of_type(name, expected_type, enum, value, optional, is_default=False):
+    if value_is_of_type(expected_type, enum, value, optional):
+        return
+
+    msg = f"The {'default ' if is_default else ''}parameter {name} has a different value than expected. "
+    if enum is None:
+        msg += f"It should be a {expected_type} but is a {type(value)}. "
+    else:
+        msg += f"It should be one of {enum!r} but is {value!r}. "
+    logger.warning(msg + f"The value is accessible but beware!")

@@ -37,7 +37,7 @@
       "properties": {
         "Type": {
           "description": "Type of the value of the parameter",
-          "enum": ["string", "integer", "float", "bool", "list", "dict"]
+          "enum": ["string", "integer", "float", "bool", "list", "dict", "enum"]
         },
         "Optional": {
           "description": "Accept null as parameter value in addition to values of the given type?",
@@ -47,11 +47,21 @@
           "description": "Description of the parameter",
           "type": "string"
         },
+        "Enum": {
+          "description": "Valid values of an enum type",
+          "type": "array"
+        },
         "Default": {
           "description": "Default value of the parameter"
         }
       },
-      "required": ["Type", "Description", "Default"]
+      "required": ["Type", "Description", "Default"],
+      "if": {
+        "properties": {
+          "Type": { "enum": ["enum"] }
+        }
+      },
+      "then": { "required": ["Enum"] }
     }
   },
 
