@@ -52,6 +52,12 @@
         "Optional": true,
         "Default": null,
         "Description": "Either an int or not. default nope"
+      },
+      "EnumValue": {
+        "Type": "enum",
+        "Enum": ["X", 1],
+        "Default": "X",
+        "Description": "Fixed number of options to choose from"
       }
     },
     "Demands": [
