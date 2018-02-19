@@ -47,6 +47,17 @@ PathsDict = ty.Dict[str, pathlib.Path]
 FileMapping = ty.Dict[str, pathlib.Path]
 
 
+class Parameter(ty.NamedTuple):
+    """Parameter entry"""
+    name: str
+    type: str
+    value: ty.Any  # uses default for initialization or None
+    default: ty.Any
+    optional: bool
+    enum: ty.Optional[ty.List[ty.Any]]
+    description: str
+
+
 def running_within_docker() -> bool:
     """
     detects, if module is running within docker and returns the result as bool
@@ -275,23 +286,42 @@ def get_app_manifest() -> dict:
 
 
 def get_parameters() -> Parameters:
-    """Returns a dict of all parameters provided by parameters.json or defaults in manifest.json"""
+    """Returns a dict of all parameters along with it's current value provided by parameters.json
+    or defaults defined in manifest.json"""
     global _PARAMETERS
 
-    # use cache
+    # use cache and return dict of {param: current value}
     if _PARAMETERS:
-        return _PARAMETERS
+        return {name: param.value for name, param in _PARAMETERS.items()}
 
     # else: load parameters
-    parameters = get_default_parameters_from_manifest()
+    parameters = load_parameters_from_manifest()
     runtime_parameters = load_runtime_parameters()
 
     # merge with defaults
-    parameters.update(runtime_parameters)
+    for name, current_value in runtime_parameters.items():
+        if name not in parameters:
+            logger.warning(f"Ignoring runtime parameter {name}, as it is not defined in manifest.json!")
+            continue
+        parameters[name] = _update_param_value(parameters[name], current_value)
 
     # check types
     check_parameter_types(parameters)
-    return parameters
+
+    # update cache and return
+    _PARAMETERS = parameters
+    return get_parameters()
+
+
+def _update_param_value(param: Parameter, new_value: ty.Any):
+    """helper function for updating the value of a Parameter instance"""
+    return Parameter(name=param.name,
+                     type=param.type,
+                     value=new_value,
+                     default=param.default,
+                     optional=param.optional,
+                     enum=param.enum,
+                     description=param.description)
 
 
 def get_parameter(param_key: str):
@@ -304,11 +334,10 @@ def get_parameter(param_key: str):
     return parameters[param_key]
 
 
-def get_default_parameters_from_manifest() -> Parameters:
+def get_default_parameters() -> Parameters:
     """returns the default parameters defined in the manifest.json"""
-    temp = get_app_manifest()['Parameters']
-    parameters = {param: value.get('Default') for param, value in temp.items()}
-    return parameters
+    parameters = get_parameters()
+    return {param: value.default for param, value in parameters.items()}
 
 
 def load_runtime_parameters() -> Parameters:
@@ -328,14 +357,23 @@ def load_runtime_parameters() -> Parameters:
             f"Please report this at https://github.com/FASTGenomics/fastgenomics-py/issues")
         return {}
 
-    check_all_runtime_parameters_are_in_manifest(runtime_parameters)
     return runtime_parameters
 
 
-def get_parameter_types_from_manifest() -> ty.Dict[str, ty.Tuple[ty.Optional[str], ty.Optional[str], bool]]:
-    """returns the types of parameters defined in the manifest.json"""
-    temp = get_app_manifest()['Parameters']
-    return {param: (value['Type'], value.get('Enum'), value.get('Optional', False)) for param, value in temp.items()}
+def load_parameters_from_manifest() -> ty.Dict[str, Parameter]:
+    """returns the parameters section defined in the manifest.json as dict of Parameter
+    """
+    param_section = get_app_manifest()['Parameters']
+
+    return {name: Parameter(name=name,
+                            type=value['Type'],
+                            value=value.get('Default'),
+                            default=value.get('Default'),
+                            optional=value.get('Optional', False),
+                            enum=value.get('Enum'),
+                            description=value['Description'])
+
+            for name, value in param_section.items()}
 
 
 def value_is_of_type(expected_type: str, enum: ty.Optional[list], value: ty.Any, optional: bool) -> bool:
@@ -364,25 +402,15 @@ def value_is_of_type(expected_type: str, enum: ty.Optional[list], value: ty.Any,
 
 def check_parameter_types(parameters: Parameters):
     """checks the correct type of parameters as specified in the manifest.json"""
-    parameter_types = get_parameter_types_from_manifest()
+    manifest_parameters = load_parameters_from_manifest()
 
-    for param_name, param_value in parameters.items():
-        expected_type, enum, optional = parameter_types[param_name]
+    for param_name, current_value in parameters.items():
+        manifest_param = manifest_parameters[param_name]
         # parameter types see manifest_schema.json
         # we do not throw an exception because having multi-value parameters is
         #  common in some libraries, e.g. specify "red" or 24342
-        warn_if_not_of_type(param_name, expected_type, enum, param_value, optional)
-
-
-def check_all_runtime_parameters_are_in_manifest(runtime_parameters: Parameters):
-    """checks, if all runtime parameters are defined in the manifest"""
-    parameters = get_default_parameters_from_manifest()
-    manifest_params_keys = set(parameters.keys())
-    runtime_params_keys = set(runtime_parameters.keys())
-    additional_runtime_params = runtime_params_keys.difference(manifest_params_keys)
-    if len(additional_runtime_params) > 0:
-        logger.warning(f"Ignoring parameter {additional_runtime_params} "
-                       f"defined in parameters.json, as it is not defined in manifest.json")
+        warn_if_not_of_type(name=param_name, expected_type=manifest_param.type, enum=manifest_param.enum,
+                            value=current_value, optional=manifest_param.optional)
 
 
 def warn_if_not_of_type(name, expected_type, enum, value, optional, is_default=False):
