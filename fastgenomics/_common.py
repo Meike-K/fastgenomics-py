@@ -409,13 +409,13 @@ def check_parameter_types(parameters: Parameters):
     """checks the correct type of parameters as specified in the manifest.json"""
     manifest_parameters = load_parameters_from_manifest()
 
-    for param_name, current_value in parameters.items():
+    for param_name, param in parameters.items():
         manifest_param = manifest_parameters[param_name]
         # parameter types see manifest_schema.json
         # we do not throw an exception because having multi-value parameters is
         #  common in some libraries, e.g. specify "red" or 24342
         warn_if_not_of_type(name=param_name, expected_type=manifest_param.type, enum=manifest_param.enum,
-                            value=current_value, optional=manifest_param.optional)
+                            value=param.value, optional=manifest_param.optional)
 
 
 def warn_if_not_of_type(name, expected_type, enum, value, optional, is_default=False):
